@@ -12,6 +12,7 @@ public class Timer {
     int mins;
     int hours;
     int index;
+    int mil = 0;
 
     public Timer() {
         list = "";
@@ -60,6 +61,14 @@ public class Timer {
         if (seconds > 59) {
             mins++;
             seconds = 0;
+        }
+    }
+
+    public void addMil() {
+        mil++;
+        if (mil > 10) {
+            addSec();
+            mil = 0;
         }
     }
 

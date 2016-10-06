@@ -1,16 +1,18 @@
 package com.example.eggertron.timer;
 
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
 public class MainActivity extends AppCompatActivity implements
-        ControlFragment.OnFragmentInteractionListener, ListFragment.OnFragmentInteractionListener {
+        ControlFragment.OnFragmentInteractionListener, ListFragment.OnFragmentInteractionListener, View.OnClickListener {
 
     //Create Finals
     public final static String LIST = "LIST",
@@ -21,6 +23,7 @@ public class MainActivity extends AppCompatActivity implements
     //create global variables.
     Button startBtn;
     Button listBtn;
+    Button backBtn;
     TextView cmdTxt;
     Timer stopWatch;
     TimerAsyncTask timerAsyncTask;
@@ -37,10 +40,15 @@ public class MainActivity extends AppCompatActivity implements
         //Check if a two pane configuration being displayed?
         if (listFragment != null &&
                 listFragment.isInLayout()) {
+        }
+        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
             listBtn.setVisibility(View.GONE);
+            backBtn.setVisibility(View.GONE);
+        }
+        else {
+            listFragment.getView().setVisibility(View.GONE);
         }
     }
-
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -67,6 +75,7 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     public void onButtonClicked(int buttonID) {
+        ListFragment listFragment = (ListFragment) getSupportFragmentManager().findFragmentById(R.id.listFrag);
         if (buttonID == 0) {
             //start stop button
             if (stopWatch.isStarted) {
@@ -78,6 +87,11 @@ public class MainActivity extends AppCompatActivity implements
             else {
                 stopWatch.start();
                 startBtn.setText("STOP");
+                if (timerAsyncTask != null) {
+                    timerAsyncTask.cancel(true);
+                }
+                timerAsyncTask = new TimerAsyncTask();
+                timerAsyncTask.execute();
             }
         }
         else if (buttonID == 1) {
@@ -89,15 +103,15 @@ public class MainActivity extends AppCompatActivity implements
             //reset button
             initialize();
         }
+        else if (buttonID == 4) {
+            listFragment.getView().setVisibility(View.GONE);
+        }
         //Check if the ListFragment exists in this layout
-        ListFragment listFragment = (ListFragment) getSupportFragmentManager().findFragmentById(R.id.listFrag);
+
         //Check if a two pane configuration being displayed?
         if (listFragment != null &&
                 listFragment.isInLayout()) {
             //informationFragment exists, two panes
-
-            listFragment.setText(stopWatch.getList());
-        } else {
             if (buttonID == 3) {
                 //Next page button.
                 //informationFragment doesn't exist, one pane
@@ -108,19 +122,15 @@ public class MainActivity extends AppCompatActivity implements
                 intent.putExtra(HOURS, stopWatch.hours);
                 intent.putExtra(INDEX, stopWatch.index);
                 intent.putExtra(THREAD_STATUS, stopWatch.isStarted);
-                //if (timerAsyncTask != null && timerAsyncTask.getStatus() == AsyncTask.Status.RUNNING) {
-                //    timerAsyncTask.cancel(true);
-                //}
-                startActivity(intent);
+                listFragment.getView().setVisibility(View.VISIBLE);
             }
+
+            listFragment.setText(stopWatch.getList());
+        } else {
+
         }
         if (stopWatch.isStarted) {
-            if (timerAsyncTask == null) {
-                timerAsyncTask = new TimerAsyncTask();
-            }
-            if (timerAsyncTask.getStatus() != AsyncTask.Status.RUNNING) {
-                timerAsyncTask.execute();
-            }
+
         }
     }
 
@@ -139,13 +149,14 @@ public class MainActivity extends AppCompatActivity implements
         if (stopWatch.getList() != null) {
             onButtonClicked(-1); // just reload
         }
+        cmdTxt.setText(stopWatch.getTime() );
         super.onRestoreInstanceState(savedInstanceState);
     }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         if (timerAsyncTask!=null && timerAsyncTask.getStatus()==AsyncTask.Status.RUNNING) {
-            outState.putBoolean(THREAD_STATUS, true);
+            outState.putBoolean(THREAD_STATUS, stopWatch.isStarted);
             timerAsyncTask.cancel(true);
         }
         else
@@ -171,11 +182,19 @@ public class MainActivity extends AppCompatActivity implements
         cmdTxt.setText("00:00:00");
         startBtn.setText("START");
         listBtn = (Button)findViewById(R.id.nextFrag);
+        backBtn = (Button)findViewById(R.id.backButn);
+        backBtn.setOnClickListener(this);
     }
 
     @Override
     public void onFragmentInteraction(Uri uri) {
         System.out.println("test");
+    }
+
+    @Override
+    public void onClick(View v) {
+        ListFragment listFragment = (ListFragment) getSupportFragmentManager().findFragmentById(R.id.listFrag);
+        listFragment.getView().setVisibility(View.GONE);
     }
 
     private class TimerAsyncTask extends AsyncTask<Integer, Integer, Void> {
@@ -200,11 +219,11 @@ public class MainActivity extends AppCompatActivity implements
             while (!isCancelled()) {
                 publishProgress();
                 try {
-                    Thread.sleep(1000);// sleep for 1 second
+                    Thread.sleep(50);// sleep for 1 second
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                stopWatch.addSec();
+                stopWatch.addMil();
             }
             return null;
         }

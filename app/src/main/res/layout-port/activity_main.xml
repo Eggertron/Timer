@@ -5,9 +5,19 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+
     <fragment
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_weight="0"
+        android:id="@+id/listFrag"
+        class="com.example.eggertron.timer.ListFragment"
+        tools:layout="@layout/fragment_list"
+        ></fragment>
+    <fragment
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="0"
         class="com.example.eggertron.timer.ControlFragment"
         android:id="@+id/controlFrag"
         tools:layout="@layout/fragment_control"
